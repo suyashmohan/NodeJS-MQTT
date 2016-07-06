@@ -1,0 +1,22 @@
+{
+  "name": "mqtt-chat",
+  "version": "0.0.1",
+  "description": "MQTT Chat App",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "mqtt-chat": "index.js"
+  },
+  "keywords": [
+    "mqtt",
+    "chat",
+    "realtime"
+  ],
+  "author": "Suyash Mohan",
+  "license": "ISC",
+  "dependencies": {
+    "mqtt": "^1.12.0"
+  }
+}
