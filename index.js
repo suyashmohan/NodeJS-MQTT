@@ -5,49 +5,64 @@
 const mqtt = require("mqtt");
 const readline = require("readline");
 const lock = require("lock")();
+const Promise = require("bluebird");
+
+function getInput(question){
+	return new Promise(function(resolve, reject){
+		const reader = readline.createInterface({
+			input: process.stdin,
+			output: process.stdout
+		});
+		reader.question(question, (answer) => {
+			resolve(answer);
+			reader.close();
+		});
+	});
+}
+
+function createJoinMSG(name, topic){
+	let msg = {
+		name: topic,
+		msg: name+" joined "+topic
+	};
+
+	return JSON.stringify(msg);
+}
+
+function createChatMsg(name, msg){
+	let message = {
+		name: name,
+		msg: msg
+	}
+	
+	return JSON.stringify(message);
+}
+
+function sendMsg(client, name, topic){
+	getInput("").then((msg)=>{
+		client.publish(topic, createChatMsg(name, msg));
+		sendMsg(client, name, topic);
+	});
+}
 
 function main(){
 	const client = mqtt.connect("mqtt://localhost");
 
-	const reader = readline.createInterface({
-		input: process.stdin,
-		output: process.stdout
-	});
-
-	let name = "", topic = "";
-
 	client.on('connect', function(){
 		console.log("Connected to Server");
-		reader.question("What's your name? ", (_name) => {
-			name = _name;
-			console.log("Hello! "+name);		
-			reader.question("What topic you are interested in? ", (_topic) => {
-				topic = _topic;
-				client.subscribe(topic);
-				let msg = {
-					name: topic,
-					msg: name+" joined "+topic
-				};
-				client.publish(topic, JSON.stringify(msg));
-
-				function askChat(){
-					reader.question("", (_msg) => {
-						if(_msg != "quit"){
-							let msg = {
-								name: name,
-								msg: _msg
-							};
-							client.publish(topic, JSON.stringify(msg));
-							askChat();
-						}else{
-							client.end();
-						}
-					});
-				}
-
-				askChat();
-			});
+		let name, topic, msg;
+		Promise.coroutine(function *(){
+			name = yield getInput("What's your name? ");
+			topic = yield getInput("What topic you are interested in? ");
+		})()
+		.then(()=> {
+			client.subscribe(topic);
+			client.publish(topic, createJoinMSG(name, topic));
+		})
+		.then(()=>{
+			sendMsg(client, name, topic);
 		});
+
 	});
 
 	client.on('message', (_topic, _message) => {

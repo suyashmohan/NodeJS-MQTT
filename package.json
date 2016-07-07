@@ -17,6 +17,7 @@
   "author": "Suyash Mohan",
   "license": "ISC",
   "dependencies": {
+    "bluebird": "^3.4.1",
     "mqtt": "^1.12.0"
   }
 }
